@@ -16,7 +16,28 @@ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A1
 echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.4.list
 sudo apt-get update
 sudo apt-get install -y mongodb-org
+
+sudo cat << EOS | sudo tee /etc/systemd/system/mongod.service
+[Unit]
+Description=MongoDB Database Service
+Wants=network.target
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/mongod --config /etc/mongod.conf
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+User=mongodb
+Group=mongodb
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
+EOS
+
 sudo service mongod start
+sudo systemctl enable mongod
 
 # setup crowi
 git clone https://github.com/crowi/crowi.git
@@ -24,4 +45,9 @@ cd crowi
 npm i -D node-sass
 npm install
 npm run build
-PASSWORD_SEED=20170222crowitest MONGO_URI=mongodb://localhost/crowi node app.js
+
+echo 'PASSWORD_SEED=20170222crowitest' >> ~/.bash_profile
+echo 'MONGO_URI=mongodb://localhost/crowi' >> ~/.bash_profile
+. ~/.bash_profile
+
+node app.js
