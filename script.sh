@@ -1,22 +1,36 @@
 #!/bin/sh
 
-# setup ndenv
-git clone https://github.com/riywo/ndenv ~/.ndenv
-echo 'export PATH="$HOME/.ndenv/bin:$PATH"' >> ~/.bash_profile
-echo 'eval "$(ndenv init -)"' >> ~/.bash_profile
+# install git
+if ! type "git" > /dev/null 2>&1
+then
+  sudo apt-get -y install git
+fi
 
-git clone https://github.com/riywo/node-build.git ~/.ndenv/plugins/node-build
-. ~/.bash_profile
-ndenv install v6.11.1
-ndenv global v6.11.1
-ndenv rehash
+# setup ndenv
+if ! type "ndenv" > /dev/null 2>&1
+then
+  git clone https://github.com/riywo/ndenv ~/.ndenv
+  echo 'export PATH="$HOME/.ndenv/bin:$PATH"' >> ~/.bash_profile
+  echo 'eval "$(ndenv init -)"' >> ~/.bash_profile
+
+  git clone https://github.com/riywo/node-build.git ~/.ndenv/plugins/node-build
+  . ~/.bash_profile
+  ndenv install v6.11.1
+  ndenv global v6.11.1
+  ndenv rehash
+fi
+
 
 # setup mongodb
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
-echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.4.list
-sudo apt-get update
-sudo apt-get install -y mongodb-org
+if ! type "mongod" > /dev/null 2>&1
+then
+  sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+  echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+  sudo apt-get update
+  sudo apt-get install -y mongodb-org
+fi
 
+# create mongodb deamon script
 sudo cat << EOS | sudo tee /etc/systemd/system/mongod.service
 [Unit]
 Description=MongoDB Database Service
@@ -40,6 +54,7 @@ sudo service mongod start
 sudo systemctl enable mongod
 
 # setup crowi
+sudo apt-get install -y libkrb5-dev
 git clone https://github.com/crowi/crowi.git
 cd crowi
 npm i -D node-sass
