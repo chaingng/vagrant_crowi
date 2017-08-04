@@ -53,6 +53,21 @@ EOS
 sudo service mongod start
 sudo systemctl enable mongod
 
+if ! type "elasticsearch" > /dev/null 2>&1
+then
+  apt-get install -y openjdk-8-jdk
+  wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+  sudo apt-get install -y apt-transport-https
+  echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list
+  sudo apt-get update
+  sudo apt-get install -y elasticsearch
+  sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install analysis-kuromoji
+  sudo /bin/systemctl daemon-reload
+  sudo /bin/systemctl enable elasticsearch.service
+  sudo systemctl start elasticsearch.service
+  echo 'ELASTICSEARCH_URI="localhost:9200"' >> ~/.bash_profile
+fi
+
 # setup crowi
 sudo apt-get install -y libkrb5-dev
 git clone https://github.com/crowi/crowi.git
